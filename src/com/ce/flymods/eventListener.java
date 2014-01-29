@@ -31,16 +31,15 @@ import com.palmergames.bukkit.towny.utils.PlayerCacheUtil;
 public class eventListener<a> implements Listener {
 	private final flymods plugin;
 	Map<String,Long> fallMap = new HashMap<String,Long>(10);
-	
+
 	public eventListener (flymods  instance){
 		plugin = instance;
 
 	}
-	
-	
-	
-	//Add players to a hashmap that signifies they are falling from being toggled off entering a town,
-	//In the damagelistener, it will cancel the fall damage so the player doesn't die on entering unallied towns
+
+
+
+
 	@EventHandler(priority = EventPriority.LOWEST)
 	public void onEntityDamageEvent(EntityDamageEvent event){
 		if (event.getCause() == EntityDamageEvent.DamageCause.FALL){
@@ -77,8 +76,8 @@ public class eventListener<a> implements Listener {
 			}
 		}
 	}
-	
-	
+
+
 
 	@EventHandler(priority = EventPriority.LOWEST)
 	public void onPlayerCommandPreprocess(PlayerCommandPreprocessEvent event) {
@@ -88,25 +87,63 @@ public class eventListener<a> implements Listener {
 		String message = event.getMessage();
 		message = message.trim().replaceAll(" +", " ");
 		Player player = event.getPlayer();
-		
-			String[] args = event.getMessage().split(" ");
-			if (args.length > 0 && args[0].compareToIgnoreCase("/fly") == 0){
-				//this is a sketchy check for town membership that needs to be fixed.
-				//"can player destroy a stone block at this location"
-				boolean bDestroy = PlayerCacheUtil.getCachePermission(player, player.getLocation(), 1, TownyPermission.ActionType.DESTROY);
-				if (!bDestroy){
-					event.setCancelled(true);
+
+		String[] args = event.getMessage().split(" ");
+		if (args.length > 0 && args[0].compareToIgnoreCase("/fly") == 0){
+
+			Location loc = player.getLocation();
+			if (TownyUniverse.getTownName(loc) == null){
+				return;
+			}
+			Resident townyPlayer = null;
+			try {
+				townyPlayer = (TownyUniverse.getDataSource().getResident(player.getName()));
+			} catch (NotRegisteredException e1) {
+				e1.printStackTrace();
+			}
+
+
+			try {
+				if (!townyPlayer.hasTown() //if he doesn't have a town
+						|| (!(CombatUtil.isAlly(townyPlayer.getTown(),TownyUniverse.getTownBlock(loc).getTown()))//or he isn't an ally
+								&& !townyPlayer.getTown().equals(TownyUniverse.getTownBlock(loc).getTown()))){//and isn't a member
+
+					event.setCancelled(true);//cancel the fly command
 					player.sendMessage("You can not fly in towns that you do not belong to!");
 				}
-			} else if (args.length > 0 && args[0].compareToIgnoreCase("/sethome") == 0) {
-				boolean bDestroy = PlayerCacheUtil.getCachePermission(player, player.getLocation(), 1, TownyPermission.ActionType.DESTROY);
-				if (!bDestroy){
-					event.setCancelled(true);
+			} catch (NotRegisteredException e) {
+				e.printStackTrace();
+			}
+
+		} else if (args.length > 0 && args[0].compareToIgnoreCase("/sethome") == 0) {
+			Location loc = player.getLocation();
+			if (TownyUniverse.getTownName(loc) == null){
+				return;
+			}
+			Resident townyPlayer = null;
+			try {
+				townyPlayer = (TownyUniverse.getDataSource().getResident(player.getName()));
+			} catch (NotRegisteredException e1) {
+				e1.printStackTrace();
+			}
+
+
+			try {
+				if (!townyPlayer.hasTown() //if he doesn't have a town
+						|| (!(CombatUtil.isAlly(townyPlayer.getTown(),TownyUniverse.getTownBlock(loc).getTown()))//or he isn't an ally
+								&& !townyPlayer.getTown().equals(TownyUniverse.getTownBlock(loc).getTown()))){//and isn't a member
+
+					event.setCancelled(true);//cancel the fly command
 					player.sendMessage("You can not use sethome in other player's towns!");
 				}
-				
+			} catch (NotRegisteredException e) {
+				e.printStackTrace();
 			}
-		
+
+
+
+		}
+
 	}
 
 	@EventHandler(priority = EventPriority.LOWEST)
@@ -126,25 +163,30 @@ public class eventListener<a> implements Listener {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
-		
+
+
+
 		if (townyPlayer != null){
-		try {
-			if (!townyPlayer.hasTown() || !(CombatUtil.isAlly(townyPlayer.getTown(),TownyUniverse.getTownBlock(loc).getTown()))){
-				if (!townyPlayer.hasTown() || !townyPlayer.getTown().equals(TownyUniverse.getTownBlock(loc).getTown())){
-					if (!player.hasPermission("flymods.bypass")){
-						player.sendMessage("You can not fly in non-allied towns!");
-						Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), "fly "+player.getName()+ " off");
-						fallMap.put(player.getName(), System.currentTimeMillis());
+			try {
+				if (!townyPlayer.hasTown() || !(CombatUtil.isAlly(townyPlayer.getTown(),TownyUniverse.getTownBlock(loc).getTown()))){//if he isn't an ally
+					if (!townyPlayer.hasTown() || !townyPlayer.getTown().equals(TownyUniverse.getTownBlock(loc).getTown())){//and he isn't a member
+						if (!player.hasPermission("flymods.bypass")){//and he doesn't have permission
+							player.sendMessage("You can not fly in non-allied towns!");
+							Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), "fly "+player.getName()+ " off");//don't let him fly in town
+
+							//Add players to a hashmap that signifies they are falling from being toggled off entering a town,
+							//In the EntityDamageByEntityEvent, it will cancel the fall damage so the player doesn't die on entering unallied towns
+							fallMap.put(player.getName(), System.currentTimeMillis());
+						}
 					}
 				}
+
+			} catch (NotRegisteredException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
-			
-		} catch (NotRegisteredException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 		}
 	}
-	
+
 
 }
