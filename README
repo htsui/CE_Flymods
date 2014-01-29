@@ -1,5 +1,11 @@
+This is a plugin for Bukkit Minecraft servers.
+Features:
+-Toggles off flying when entering enemy towns
+-Disallows turning on flying in enemy towns
+
+-Disallows /sethome in enemy towns (will soon be moved to a seperate plugin)
+
+
 Dependencies:
-
 craftbukkit 1.7.2 http://dl.bukkit.org/downloads/craftbukkit/view/02457_1.7.2-R0.2/
-
-Towny.jar palmergames.com/downloads/
+Towny.jar http://palmergames.com/downloads/

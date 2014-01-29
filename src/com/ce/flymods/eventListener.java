@@ -133,7 +133,7 @@ public class eventListener<a> implements Listener {
 						|| (!(CombatUtil.isAlly(townyPlayer.getTown(),TownyUniverse.getTownBlock(loc).getTown()))//or he isn't an ally
 								&& !townyPlayer.getTown().equals(TownyUniverse.getTownBlock(loc).getTown()))){//and isn't a member
 
-					event.setCancelled(true);//cancel the fly command
+					event.setCancelled(true);//cancel the sethome command
 					player.sendMessage("You can not use sethome in other player's towns!");
 				}
 			} catch (NotRegisteredException e) {
